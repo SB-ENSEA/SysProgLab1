@@ -13,6 +13,8 @@ int main(int argc, char **argv){
 	char *print;
 	print = "Welcome to ENSEA Tiny Shell \n Pour quitter, tapez 'exit'. \n";
 	write(STDOUT_FILENO,print,59); 
+	
+	//allo
 
 }
 
