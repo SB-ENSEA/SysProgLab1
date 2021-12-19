@@ -1,4 +1,4 @@
-#define COMMAND_SIZE 50
+#define COMMAND_SIZE 4096
 #define PRINT_SIZE 80
 #define PATH_SIZE 150
 #define StartMsg "Welcome to ENSEA Tiny Shell \nPour quitter, tapez 'exit'. \nenseash%"
@@ -18,6 +18,9 @@ void Display(char *);
 
 char** ResToFile(char **args);
 
+char* findPath(char **args);
 
+int findRedir(char **args);
 
+char** replaceRedir(char **args);
 
