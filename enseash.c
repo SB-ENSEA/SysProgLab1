@@ -59,7 +59,7 @@ int SpaceCount(char *args){
 
 int DetectChar(char **args,char * find){
 	int index = 0;
-	while(args[index]!=(char *)NULL){
+	while(args[index]!=(char *) NULL){
 		if(strcmp(args[index],find)==0){return index;}
 		index++;
 		}
@@ -68,18 +68,47 @@ int DetectChar(char **args,char * find){
 
 char** ResToFile(char **args){
 	int desc_file;
-	int index = DetectChar(args,">");
-	char* file = args[index+1]; //the String after ">" is the file path
+	char* file = findPath(args);
 	
-	args[index]=(char*) NULL;
-
 	desc_file = open(file, O_RDWR);
 	if(desc_file==-1){
 		desc_file = open(file,O_RDWR | O_CREAT ,S_IRWXU | S_IRWXG | S_IRWXO); //if the requested file does not exist, we create it
 	}
 	dup2(desc_file,STDOUT_FILENO);
-	return args;
+	
+	return replaceRedir(args);
 }
+
+
+char** FileToCommand(char **args, char* prompt){
+	int desc_file;
+	char* file = findPath(args);
+	char* buf=malloc(COMMAND_SIZE);
+
+	desc_file = open(file,O_RDWR);
+	read(desc_file,buf,COMMAND_SIZE);
+	args = FormatArgs(buf);
+	return args;
+	}
+
+char** replaceRedir(char **args){
+	args[findRedir(args)] = (char *) NULL;
+	return args;
+	}
+
+
+char* findPath(char **args){
+	return args[findRedir(args) + 1]; //the String after ">" is the file path
+	}
+
+int findRedir(char **args){
+	int pos = DetectChar(args,">");
+	if(pos==-1){
+		pos = DetectChar(args,"<");
+		}
+	return pos;
+}
+
 
 void Display(char * text){
 	write(STDOUT_FILENO,text,strlen(text));
@@ -139,6 +168,7 @@ int main(int argc, char **argv){
 				promptarg=ResToFile(promptarg);
 				}
 			if(DetectChar(promptarg,"<")!=-1){
+				promptarg=FileToCommand(promptarg,prompt);
 				}
 			execvp(promptarg[0],promptarg);
 			Display("command not found \n");
