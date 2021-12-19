@@ -1,2 +1,2 @@
-# SysProgLab1
-System programming Lab 1 
+# System progamming project 
+creation of a shell using C 
