@@ -19,18 +19,17 @@ void ChildState(int state,long exectime){
 	}
 
 char** FormatArgs(char *args){ 
-	char **argv=malloc(SpaceCount(args)+2); //the number of arguments is 1 + the number of spaces, then we add (char*) NULL
+	char **argv=malloc((SpaceCount(args)+2) *COMMAND_SIZE); //the number of arguments is 1 + the number of spaces, then we add (char*) NULL
 	int indexArgs = 0;
 	int indexArgv = 0;
 	int indexChar = 0;
 	
 	for(indexArgv=0;indexArgv<SpaceCount(args)+2;indexArgv++){
-		argv[indexArgv]=malloc(strlen(args)); 
+		argv[indexArgv]=malloc(COMMAND_SIZE); 
 		}
 		
 	indexArgv=0;
-	
-	while(args[indexArgs]!='\0'){
+	while(indexArgs<=strlen(args)){
 		if(args[indexArgs]==' '){
 			indexArgv++;
 			indexArgs++;
@@ -42,6 +41,7 @@ char** FormatArgs(char *args){
 		indexChar++;
 		}
 		}
+			
 	argv[indexArgv+1]=(char*) NULL; 
 	return argv;
 	}
@@ -50,7 +50,7 @@ int SpaceCount(char *args){
 
 	int index = 0;
 	int count = 0;
-	while(args[index]!='\0'){
+	while(index < strlen(args)){
 		if(args[index]==' '){count+=1;}
 		index++;
 		}
@@ -69,36 +69,31 @@ int DetectChar(char **args,char * find){
 char** ResToFile(char **args){
 	int desc_file;
 	char* file = findPath(args);
-	
+
 	desc_file = open(file, O_RDWR);
 	if(desc_file==-1){
 		desc_file = open(file,O_RDWR | O_CREAT ,S_IRWXU | S_IRWXG | S_IRWXO); //if the requested file does not exist, we create it
 	}
 	dup2(desc_file,STDOUT_FILENO);
 	
-	return replaceRedir(args);
+	args[findRedir(args)]= (char *) NULL;
+	
+	return args;
 }
 
-
-char** FileToCommand(char **args, char* prompt){
-	int desc_file;
+char** FileToCommand(char **args){
+	
+	int redirIndex = findRedir(args);
 	char* file = findPath(args);
-	char* buf=malloc(COMMAND_SIZE);
-
-	desc_file = open(file,O_RDWR);
-	read(desc_file,buf,COMMAND_SIZE);
-	args = FormatArgs(buf);
+	
+	args[redirIndex] = file;
+	args[redirIndex+1]=(char *) NULL; 
+	
 	return args;
 	}
-
-char** replaceRedir(char **args){
-	args[findRedir(args)] = (char *) NULL;
-	return args;
-	}
-
 
 char* findPath(char **args){
-	return args[findRedir(args) + 1]; //the String after ">" is the file path
+	return args[findRedir(args)+1]; //the String after ">" is the file path
 	}
 
 int findRedir(char **args){
@@ -108,7 +103,6 @@ int findRedir(char **args){
 		}
 	return pos;
 }
-
 
 void Display(char * text){
 	write(STDOUT_FILENO,text,strlen(text));
@@ -143,15 +137,15 @@ int main(int argc, char **argv){
 	
 	if(size==0){
 	Display("\nbye bye\n");
-	exit(EXIT_FAILURE);
+	exit(EXIT_SUCCESS);
 	}
 	prompt[size-1] = '\0';		
 	if(strcmp(prompt,exitcmd)==0){	
 	Display("bye bye\n");
-	exit(EXIT_FAILURE);
+	exit(EXIT_SUCCESS);
 	}
 	else{
-		char **promptarg = malloc(SpaceCount(prompt)+2);
+		char **promptarg = malloc((SpaceCount(prompt)+2)* COMMAND_SIZE);
 		pid=fork();
 		if(pid==-1){exit(EXIT_FAILURE);}
 		if (pid!=0){			 //Parent process
@@ -163,13 +157,14 @@ int main(int argc, char **argv){
 			ChildState(status,FormatTime(tps1,tps2));
 			}
 		else{					 //Child process
-			promptarg = FormatArgs(prompt);			
+			promptarg = FormatArgs(prompt);	
 			if(DetectChar(promptarg,">")!=-1){
 				promptarg=ResToFile(promptarg);
 				}
 			if(DetectChar(promptarg,"<")!=-1){
-				promptarg=FileToCommand(promptarg,prompt);
+				promptarg=FileToCommand(promptarg);
 				}
+			
 			execvp(promptarg[0],promptarg);
 			Display("command not found \n");
 			exit(EXIT_FAILURE);
