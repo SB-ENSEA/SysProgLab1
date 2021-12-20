@@ -2,6 +2,7 @@
 #define PRINT_SIZE 80
 #define PATH_SIZE 150
 #define StartMsg "Welcome to ENSEA Tiny Shell \nPour quitter, tapez 'exit'. \nenseash%"
+#define exitcmd "exit"
 
 
 int main(int argc, char **argv);
@@ -16,7 +17,9 @@ int SpaceCount(char *);
 
 void Display(char *);
 
-char** ResToFile(char **args);
+char** ResToFile(char **);
+
+char** FileToCommand(char **);
 
 char* findPath(char **args);
 
